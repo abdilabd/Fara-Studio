@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FARA Studio — Streaming Premium</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080b12;
+    --surface: #0f1320;
+    --surface2: #161c2e;
+    --accent: #e8b84b;
+    --accent2: #ff5f5f;
+    --text: #e8eaf0;
+    --muted: #6b7498;
+    --green: #22c97a;
+    --orange: #f59e0b;
+    --red: #ef4444;
+    --border: rgba(255,255,255,0.07);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; overflow-x:hidden; }
+
+  /* ── HERO ── */
+  #hero {
+    position: relative; height: 100vh; min-height: 600px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    overflow: hidden;
+  }
+  .trailer-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background: #000;
+  }
+  .trailer-slide {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    opacity: 0; transition: opacity 1.2s ease;
+  }
+  .trailer-slide.active { opacity: 1; }
+  .trailer-slide:nth-child(1) { background-image: url('https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=1600&q=80'); }
+  .trailer-slide:nth-child(2) { background-image: url('https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=1600&q=80'); }
+  .trailer-slide:nth-child(3) { background-image: url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1600&q=80'); }
+  .trailer-slide:nth-child(4) { background-image: url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1600&q=80'); }
+  .hero-overlay {
+    position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(to top, rgba(8,11,18,1) 0%, rgba(8,11,18,0.5) 40%, rgba(8,11,18,0.2) 70%, rgba(8,11,18,0.4) 100%);
+  }
+  .slide-dots {
+    position: absolute; bottom: 200px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 8px; z-index: 3;
+  }
+  .slide-dot {
+    width: 6px; height: 6px; border-radius: 3px;
+    background: rgba(255,255,255,0.3); cursor: pointer;
+    transition: all 0.3s; border: none;
+  }
+  .slide-dot.active { width: 24px; background: var(--accent); }
+
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 40px;
+    background: linear-gradient(to bottom, rgba(8,11,18,0.9), transparent);
+    backdrop-filter: blur(0px);
+    transition: all 0.3s;
+  }
+  nav.scrolled {
+    background: rgba(8,11,18,0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem; letter-spacing: 4px;
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .logo span { color: var(--text); }
+  .nav-links { display: flex; gap: 32px; align-items: center; }
+  .nav-links a {
+    color: var(--muted); text-decoration: none;
+    font-size: 0.85rem; font-weight: 500; letter-spacing: 1px;
+    text-transform: uppercase; transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .btn-nav {
+    background: var(--accent); color: #000;
+    padding: 8px 20px; border-radius: 4px;
+    font-weight: 600; font-size: 0.8rem; letter-spacing: 1px;
+    text-transform: uppercase; cursor: pointer; border: none;
+    text-decoration: none; transition: opacity 0.2s;
+  }
+  .btn-nav:hover { opacity: 0.85; }
+
+  .hero-content {
+    position: relative; z-index: 2;
+    padding: 0 40px 80px;
+    max-width: 700px;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: var(--accent); color: #000;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 2px;
+    padding: 4px 12px; border-radius: 2px;
+    margin-bottom: 20px; text-transform: uppercase;
+  }
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3.5rem, 8vw, 7rem);
+    line-height: 0.9; letter-spacing: 2px;
+    margin-bottom: 20px;
+  }
+  .hero-title .highlight { color: var(--accent); }
+  .hero-sub {
+    color: rgba(232,234,240,0.7); font-size: 1rem;
+    line-height: 1.6; margin-bottom: 36px; max-width: 480px;
+  }
+  .hero-btns { display: flex; gap: 16px; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--accent); color: #000;
+    padding: 14px 32px; border-radius: 4px;
+    font-weight: 700; font-size: 0.9rem; letter-spacing: 1px;
+    text-transform: uppercase; cursor: pointer; border: none;
+    transition: all 0.2s; text-decoration: none; display: inline-block;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(232,184,75,0.3); }
+  .btn-ghost {
+    background: transparent; color: var(--text);
+    padding: 14px 32px; border-radius: 4px;
+    font-weight: 600; font-size: 0.9rem; letter-spacing: 1px;
+    text-transform: uppercase; cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.2);
+    transition: all 0.2s; text-decoration: none; display: inline-block;
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── FORFAITS ── */
+  #forfaits { padding: 100px 40px; max-width: 1200px; margin: 0 auto; }
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem; letter-spacing: 3px; color: var(--accent);
+    text-transform: uppercase; margin-bottom: 12px;
+  }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    letter-spacing: 2px; margin-bottom: 60px;
+  }
+  .plans-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 24px;
+  }
+  .plan-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 36px 28px;
+    position: relative; overflow: hidden;
+    transition: all 0.3s; cursor: pointer;
+  }
+  .plan-card:hover { transform: translateY(-6px); border-color: rgba(232,184,75,0.3); }
+  .plan-card.featured {
+    border-color: var(--accent);
+    background: linear-gradient(135deg, #0f1320, #1a1600);
+  }
+  .plan-card.featured::before {
+    content: 'POPULAIRE';
+    position: absolute; top: 16px; right: 16px;
+    background: var(--accent); color: #000;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem; font-weight: 700; letter-spacing: 2px;
+    padding: 3px 8px; border-radius: 2px;
+  }
+  .plan-duration {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem; color: var(--muted); letter-spacing: 2px;
+    text-transform: uppercase; margin-bottom: 12px;
+  }
+  .plan-price {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem; line-height: 1; color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .plan-currency {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem; color: var(--muted); margin-bottom: 24px;
+  }
+  .plan-features { list-style: none; margin-bottom: 32px; }
+  .plan-features li {
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+    font-size: 0.88rem; color: rgba(232,234,240,0.8);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .plan-features li::before { content: '✦'; color: var(--accent); font-size: 0.6rem; }
+  .btn-plan {
+    width: 100%; padding: 13px;
+    background: transparent; border: 1px solid var(--accent);
+    color: var(--accent); border-radius: 4px;
+    font-weight: 600; font-size: 0.85rem; letter-spacing: 1px;
+    text-transform: uppercase; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-plan:hover, .plan-card.featured .btn-plan {
+    background: var(--accent); color: #000;
+  }
+
+  /* ── FORMULAIRE ── */
+  #commande { padding: 100px 40px; background: var(--surface); }
+  .form-container { max-width: 600px; margin: 0 auto; }
+  .form-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem; letter-spacing: 2px; margin-bottom: 8px;
+  }
+  .form-subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 40px; line-height: 1.6; }
+  .form-group { margin-bottom: 20px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  label {
+    display: block; font-size: 0.78rem; font-weight: 600;
+    letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted);
+    margin-bottom: 8px;
+  }
+  label .req { color: var(--accent); }
+  input, select {
+    width: 100%; padding: 14px 16px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem; outline: none; transition: border 0.2s;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  select option { background: var(--bg); }
+  .upload-zone {
+    border: 2px dashed var(--border); border-radius: 8px;
+    padding: 40px 20px; text-align: center; cursor: pointer;
+    transition: all 0.2s; position: relative;
+  }
+  .upload-zone:hover, .upload-zone.dragover { border-color: var(--accent); background: rgba(232,184,75,0.04); }
+  .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .upload-icon { font-size: 2rem; margin-bottom: 10px; }
+  .upload-text { font-size: 0.85rem; color: var(--muted); }
+  .upload-text span { color: var(--accent); }
+  #preview-img { max-width: 100%; border-radius: 6px; margin-top: 12px; display: none; max-height: 150px; object-fit: cover; }
+  .btn-submit {
+    width: 100%; padding: 16px;
+    background: var(--accent); color: #000; border: none;
+    border-radius: 6px; font-weight: 700; font-size: 1rem;
+    letter-spacing: 1px; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s; margin-top: 12px;
+  }
+  .btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 30px; right: 30px; z-index: 9999;
+    background: var(--surface2); border: 1px solid var(--accent);
+    border-radius: 8px; padding: 16px 24px;
+    font-size: 0.9rem; color: var(--text);
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.4s; max-width: 320px;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ── MODAL LOGIN ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(6px);
+    display: none; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 48px 40px; width: 100%; max-width: 440px;
+    position: relative;
+  }
+  .modal-close {
+    position: absolute; top: 16px; right: 20px;
+    background: none; border: none; color: var(--muted);
+    font-size: 1.4rem; cursor: pointer;
+  }
+  .modal-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem; letter-spacing: 2px; margin-bottom: 8px;
+  }
+  .modal-sub { color: var(--muted); font-size: 0.85rem; margin-bottom: 32px; }
+  .tab-btns { display: flex; gap: 0; margin-bottom: 28px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .tab-btn {
+    flex: 1; padding: 10px; background: none; border: none;
+    color: var(--muted); font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+  }
+  .tab-btn.active { background: var(--accent); color: #000; font-weight: 700; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── ESPACE CLIENT ── */
+  #espace-client { padding: 100px 40px; max-width: 1000px; margin: 0 auto; display: none; }
+  .client-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 48px; flex-wrap: wrap; gap: 20px;
+  }
+  .client-greeting { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 2px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 48px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 28px 24px;
+  }
+  .stat-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; line-height: 1; }
+  .stat-value.gold { color: var(--accent); }
+  .stars-display { display: flex; gap: 4px; margin-top: 8px; }
+  .star { color: var(--muted); font-size: 1.2rem; }
+  .star.lit { color: var(--accent); }
+
+  /* ── ADMIN ── */
+  #espace-admin { padding: 100px 40px; max-width: 1200px; margin: 0 auto; display: none; }
+  .admin-header { margin-bottom: 48px; }
+  .admin-title { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; letter-spacing: 3px; }
+  .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 40px; }
+  .admin-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 28px;
+  }
+  .admin-card-title { font-family: 'Space Mono', monospace; font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 20px; }
+  .mini-chart { height: 80px; display: flex; align-items: flex-end; gap: 6px; }
+  .bar {
+    flex: 1; border-radius: 3px 3px 0 0;
+    background: linear-gradient(to top, var(--accent), rgba(232,184,75,0.4));
+    transition: height 0.4s ease;
+  }
+  .bar-label { font-size: 0.6rem; color: var(--muted); text-align: center; margin-top: 6px; }
+  .chart-bars { display: flex; flex-direction: column; }
+  .chart-labels { display: flex; gap: 6px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-family: 'Space Mono', monospace; font-size: 0.7rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  td { padding: 14px 12px; font-size: 0.88rem; border-bottom: 1px solid var(--border); }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .badge.active { background: rgba(34,201,122,0.15); color: var(--green); }
+  .badge.warning { background: rgba(245,158,11,0.15); color: var(--orange); }
+  .badge.danger { background: rgba(239,68,68,0.15); color: var(--red); }
+  .badge.pending { background: rgba(232,184,75,0.15); color: var(--accent); }
+  .badge::before { content:'●'; font-size: 0.5rem; }
+  .btn-validate {
+    padding: 6px 14px; background: var(--green); color: #000;
+    border: none; border-radius: 4px; font-size: 0.75rem; font-weight: 700;
+    cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+    transition: opacity 0.2s;
+  }
+  .btn-validate:hover { opacity: 0.8; }
+  .btn-reject {
+    padding: 6px 14px; background: transparent; color: var(--red);
+    border: 1px solid var(--red); border-radius: 4px; font-size: 0.75rem; font-weight: 700;
+    cursor: pointer; text-transform: uppercase; letter-spacing: 1px; margin-left: 6px;
+    transition: all 0.2s;
+  }
+  .btn-reject:hover { background: var(--red); color: #fff; }
+  .profit-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .profit-tab {
+    padding: 6px 14px; background: none; border: 1px solid var(--border);
+    border-radius: 4px; color: var(--muted); font-size: 0.75rem;
+    cursor: pointer; letter-spacing: 1px; transition: all 0.2s;
+  }
+  .profit-tab.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+  .total-profit {
+    font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem;
+    color: var(--accent); margin-bottom: 16px;
+  }
+  .btn-logout {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); padding: 8px 20px; border-radius: 4px;
+    font-size: 0.8rem; cursor: pointer; transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+  .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 60px 40px 40px; border-top: 1px solid var(--border);
+    display: flex; flex-wrap: wrap; justify-content: space-between;
+    align-items: center; gap: 24px;
+  }
+  .footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 4px; color: var(--accent); }
+  .footer-links { display: flex; gap: 24px; flex-wrap: wrap; }
+  .footer-links a { color: var(--muted); text-decoration: none; font-size: 0.82rem; transition: color 0.2s; }
+  .footer-links a:hover { color: var(--text); }
+  .footer-copy { color: var(--muted); font-size: 0.78rem; }
+  .wa-float {
+    position: fixed; bottom: 30px; left: 30px; z-index: 90;
+    background: #25d366; color: #fff; border-radius: 50px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 20px; text-decoration: none;
+    font-weight: 600; font-size: 0.85rem;
+    box-shadow: 0 4px 20px rgba(37,211,102,0.4);
+    transition: all 0.3s;
+  }
+  .wa-float:hover { transform: scale(1.05); box-shadow: 0 6px 30px rgba(37,211,102,0.5); }
+  .wa-float svg { width: 20px; height: 20px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    nav { padding: 16px 20px; }
+    .nav-links { display: none; }
+    .hero-content { padding: 0 20px 100px; }
+    #forfaits, #commande, #espace-client, #espace-admin { padding: 80px 20px; }
+    .form-row { grid-template-columns: 1fr; }
+    .admin-grid { grid-template-columns: 1fr; }
+    footer { flex-direction: column; text-align: center; }
+    .slide-dots { bottom: 120px; }
+  }
+  @media (max-width: 480px) {
+    .hero-title { font-size: 3rem; }
+    .modal { padding: 32px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="navbar">
+  <a href="#" class="logo">FARA<span> Studio</span></a>
+  <div class="nav-links">
+    <a href="#forfaits">Forfaits</a>
+    <a href="#commande">Commander</a>
+    <a href="#" onclick="showSection('client')">Mon espace</a>
+    <a class="btn-nav" onclick="openModal()">Connexion</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="trailer-bg">
+    <div class="trailer-slide active"></div>
+    <div class="trailer-slide"></div>
+    <div class="trailer-slide"></div>
+    <div class="trailer-slide"></div>
+  </div>
+  <div class="hero-overlay"></div>
+  <div class="slide-dots" id="slideDots"></div>
+  <div class="hero-content">
+    <div class="hero-badge">✦ Streaming Premium</div>
+    <h1 class="hero-title">Films & Séries<br><span class="highlight">Sans Limites</span></h1>
+    <p class="hero-sub">Accédez à des milliers de contenus premium. Choisissez votre durée, payez simplement, profitez instantanément.</p>
+    <div class="hero-btns">
+      <a href="#forfaits" class="btn-primary">Voir les forfaits</a>
+      <a href="https://wa.me/33652468922" target="_blank" class="btn-ghost">💬 Nous contacter</a>
+    </div>
+  </div>
+</section>
+
+<!-- FORFAITS -->
+<section id="forfaits">
+  <p class="section-label">✦ Nos offres</p>
+  <h2 class="section-title">Choisissez Votre Accès</h2>
+  <div class="plans-grid">
+    <div class="plan-card" onclick="selectPlan('1 Semaine', 600)">
+      <div class="plan-duration">Accès</div>
+      <div class="plan-price">600</div>
+      <div class="plan-currency">FDJ · 1 semaine</div>
+      <ul class="plan-features">
+        <li>Accès complet 7 jours</li>
+        <li>Tous films & séries</li>
+        <li>HD disponible</li>
+        <li>+10 Stars fidélité</li>
+      </ul>
+      <button class="btn-plan">Choisir</button>
+    </div>
+    <div class="plan-card featured" onclick="selectPlan('1 Mois', 1000)">
+      <div class="plan-duration">Accès</div>
+      <div class="plan-price">1000</div>
+      <div class="plan-currency">FDJ · 1 mois</div>
+      <ul class="plan-features">
+        <li>Accès complet 30 jours</li>
+        <li>Tous films & séries</li>
+        <li>Full HD disponible</li>
+        <li>+50 Stars fidélité</li>
+      </ul>
+      <button class="btn-plan">Choisir</button>
+    </div>
+    <div class="plan-card" onclick="selectPlan('6 Mois', 5000)">
+      <div class="plan-duration">Accès</div>
+      <div class="plan-price">5000</div>
+      <div class="plan-currency">FDJ · 6 mois</div>
+      <ul class="plan-features">
+        <li>Accès complet 180 jours</li>
+        <li>Tous films & séries</li>
+        <li>4K disponible</li>
+        <li>+300 Stars fidélité</li>
+      </ul>
+      <button class="btn-plan">Choisir</button>
+    </div>
+  </div>
+</section>
+
+<!-- FORMULAIRE -->
+<section id="commande">
+  <div class="form-container">
+    <p class="section-label">✦ Commander</p>
+    <h2 class="form-title">Formulaire de Commande</h2>
+    <p class="form-subtitle">Remplissez le formulaire, envoyez votre preuve de paiement et on active votre accès sous peu.</p>
+    <div class="form-group form-row">
+      <div>
+        <label>Nom <span class="req">*</span></label>
+        <input type="text" id="f-nom" placeholder="Votre nom" required>
+      </div>
+      <div>
+        <label>Prénom</label>
+        <input type="text" id="f-prenom" placeholder="Votre prénom">
+      </div>
+    </div>
+    <div class="form-group form-row">
+      <div>
+        <label>Forfait <span class="req">*</span></label>
+        <select id="f-forfait">
+          <option value="">Choisir...</option>
+          <option value="1 Semaine — 600 FDJ">1 Semaine — 600 FDJ</option>
+          <option value="1 Mois — 1000 FDJ">1 Mois — 1000 FDJ</option>
+          <option value="6 Mois — 5000 FDJ">6 Mois — 5000 FDJ</option>
+        </select>
+      </div>
+      <div>
+        <label>Téléphone</label>
+        <input type="tel" id="f-tel" placeholder="+253 ...">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Preuve de paiement <span class="req">*</span></label>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="f-proof" accept="image/*" onchange="previewImage(event)">
+        <div class="upload-icon">📎</div>
+        <div class="upload-text">Déposez votre capture ici ou <span>parcourir</span></div>
+        <img id="preview-img" alt="aperçu">
+      </div>
+    </div>
+    <button class="btn-submit" onclick="submitOrder()">Envoyer la commande via WhatsApp</button>
+  </div>
+</section>
+
+<!-- ESPACE CLIENT -->
+<section id="espace-client">
+  <div class="client-header">
+    <div>
+      <p class="section-label">✦ Bienvenue</p>
+      <div class="client-greeting" id="clientName">Chargement...</div>
+    </div>
+    <button class="btn-logout" onclick="logout()">Se déconnecter</button>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Jours restants</div>
+      <div class="stat-value gold" id="daysLeft">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Forfait actif</div>
+      <div class="stat-value" id="activePlan" style="font-size:1.4rem;margin-top:10px;">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Stars fidélité</div>
+      <div class="stat-value gold" id="starsCount">—</div>
+      <div class="stars-display" id="starsDisplay"></div>
+    </div>
+  </div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;">
+    <div class="admin-card-title">Historique des commandes</div>
+    <table>
+      <thead><tr><th>Date</th><th>Forfait</th><th>Statut</th><th>Stars</th></tr></thead>
+      <tbody id="clientHistory"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ESPACE ADMIN -->
+<section id="espace-admin">
+  <div class="admin-header">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+      <div>
+        <p class="section-label">✦ Administration</p>
+        <div class="admin-title">Dashboard</div>
+      </div>
+      <button class="btn-logout" onclick="logout()">Se déconnecter</button>
+    </div>
+  </div>
+
+  <!-- Profits -->
+  <div class="admin-card" style="margin-bottom:24px;">
+    <div class="admin-card-title">Profits</div>
+    <div class="profit-tabs">
+      <button class="profit-tab active" onclick="setProfitView('jour',this)">Jour</button>
+      <button class="profit-tab" onclick="setProfitView('semaine',this)">Semaine</button>
+      <button class="profit-tab" onclick="setProfitView('mois',this)">Mois</button>
+      <button class="profit-tab" onclick="setProfitView('an',this)">Année</button>
+    </div>
+    <div class="total-profit" id="totalProfit">2 600 FDJ</div>
+    <div style="display:flex;align-items:flex-end;gap:6px;height:100px;" id="profitChart"></div>
+    <div style="display:flex;gap:6px;" id="profitLabels"></div>
+  </div>
+
+  <div class="admin-grid">
+    <!-- Nouvelles demandes -->
+    <div class="admin-card" style="grid-column:1/-1;">
+      <div class="admin-card-title">Nouvelles demandes en attente</div>
+      <table>
+        <thead><tr><th>Nom</th><th>Forfait</th><th>Date</th><th>Statut</th><th>Action</th></tr></thead>
+        <tbody id="pendingOrders"></tbody>
+      </table>
+    </div>
+
+    <!-- Abonnements -->
+    <div class="admin-card" style="grid-column:1/-1;">
+      <div class="admin-card-title">Suivi des accès</div>
+      <table>
+        <thead><tr><th>Client</th><th>Forfait</th><th>Expiration</th><th>Jours restants</th><th>Statut</th></tr></thead>
+        <tbody id="accessTable"></tbody>
+      </table>
+    </div>
+
+    <!-- Fidélité -->
+    <div class="admin-card" style="grid-column:1/-1;">
+      <div class="admin-card-title">Gestion fidélité — Stars</div>
+      <table>
+        <thead><tr><th>Client</th><th>Stars</th><th>Niveau</th><th>Commandes</th></tr></thead>
+        <tbody id="loyaltyTable"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">FARA Studio</div>
+  <div class="footer-links">
+    <a href="#forfaits">Forfaits</a>
+    <a href="#commande">Commander</a>
+    <a href="https://wa.me/33652468922" target="_blank">WhatsApp</a>
+  </div>
+  <div class="footer-copy">© 2025 FARA Studio. Tous droits réservés.</div>
+</footer>
+
+<!-- WhatsApp Float -->
+<a href="https://wa.me/33652468922" target="_blank" class="wa-float">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.112 1.524 5.836L.057 23.5l5.825-1.528A11.944 11.944 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.028-1.38l-.36-.214-3.732.979 1-3.64-.234-.374A9.817 9.817 0 012.182 12C2.182 6.578 6.578 2.182 12 2.182S21.818 6.578 21.818 12 17.422 21.818 12 21.818z"/></svg>
+  WhatsApp
+</a>
+
+<!-- MODAL LOGIN -->
+<div class="modal-overlay" id="loginModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title">Connexion</div>
+    <p class="modal-sub">Accédez à votre espace personnel ou admin.</p>
+    <div class="tab-btns">
+      <button class="tab-btn active" onclick="switchTab('login',this)">Se connecter</button>
+      <button class="tab-btn" onclick="switchTab('register',this)">Créer un compte</button>
+    </div>
+    <div class="tab-content active" id="tab-login">
+      <div class="form-group"><label>Email</label><input type="email" id="l-email" placeholder="email@exemple.com"></div>
+      <div class="form-group"><label>Mot de passe</label><input type="password" id="l-pass" placeholder="••••••••"></div>
+      <button class="btn-submit" onclick="login()">Se connecter</button>
+    </div>
+    <div class="tab-content" id="tab-register">
+      <div class="form-group"><label>Nom complet</label><input type="text" id="r-name" placeholder="Votre nom"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="r-email" placeholder="email@exemple.com"></div>
+      <div class="form-group"><label>Mot de passe</label><input type="password" id="r-pass" placeholder="••••••••"></div>
+      <button class="btn-submit" onclick="register()">Créer mon compte</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ── DEMO DATA ──
+const DEMO_USERS = [
+  { email: 'admin@ilmo.com', pass: 'admin123', role: 'admin', name: 'Admin' },
+  { email: 'client@ilmo.com', pass: 'client123', role: 'user', name: 'Aminata Diallo', days: 18, plan: '1 Mois — 1000 FDJ', stars: 60 },
+  { email: 'demo@ilmo.com', pass: 'demo123', role: 'user', name: 'Hassan Omar', days: 2, plan: '1 Semaine — 600 FDJ', stars: 10 }
+];
+
+let USERS = JSON.parse(localStorage.getItem('ilmo_users') || JSON.stringify(DEMO_USERS));
+let ORDERS = JSON.parse(localStorage.getItem('ilmo_orders') || '[]');
+let currentUser = null;
+
+// Demo orders for admin
+if (ORDERS.length === 0) {
+  ORDERS = [
+    { id:1, nom:'Karim Abdou', forfait:'1 Mois — 1000 FDJ', date:'2025-07-01', status:'pending', proof:'#' },
+    { id:2, nom:'Fatima Said', forfait:'6 Mois — 5000 FDJ', date:'2025-07-02', status:'pending', proof:'#' },
+    { id:3, nom:'Ibrahim Hassan', forfait:'1 Semaine — 600 FDJ', date:'2025-06-28', status:'active', daysLeft:5 },
+    { id:4, nom:'Layla Ahmed', forfait:'1 Mois — 1000 FDJ', date:'2025-06-01', status:'active', daysLeft:14 },
+    { id:5, nom:'Youssef Ali', forfait:'6 Mois — 5000 FDJ', date:'2025-04-01', status:'warning', daysLeft:3 },
+    { id:6, nom:'Mariam Djibril', forfait:'1 Semaine — 600 FDJ', date:'2025-06-25', status:'danger', daysLeft:0 }
+  ];
+  localStorage.setItem('ilmo_orders', JSON.stringify(ORDERS));
+}
+
+// ── HERO SLIDER ──
+let slideIdx = 0;
+const slides = document.querySelectorAll('.trailer-slide');
+const dotsEl = document.getElementById('slideDots');
+slides.forEach((_,i) => {
+  const d = document.createElement('button');
+  d.className = 'slide-dot' + (i===0?' active':'');
+  d.onclick = () => goSlide(i);
+  dotsEl.appendChild(d);
+});
+function goSlide(i) {
+  slides[slideIdx].classList.remove('active');
+  document.querySelectorAll('.slide-dot')[slideIdx].classList.remove('active');
+  slideIdx = i;
+  slides[slideIdx].classList.add('active');
+  document.querySelectorAll('.slide-dot')[slideIdx].classList.add('active');
+}
+setInterval(() => goSlide((slideIdx+1) % slides.length), 5000);
+
+// ── NAV SCROLL ──
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 60);
+});
+
+// ── SELECT PLAN ──
+function selectPlan(name, price) {
+  const sel = document.getElementById('f-forfait');
+  sel.value = name + ' — ' + price + ' FDJ';
+  document.getElementById('commande').scrollIntoView({behavior:'smooth'});
+}
+
+// ── PREVIEW IMAGE ──
+function previewImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = document.getElementById('preview-img');
+    img.src = ev.target.result;
+    img.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── SUBMIT ORDER ──
+function submitOrder() {
+  const nom = document.getElementById('f-nom').value.trim();
+  const prenom = document.getElementById('f-prenom').value.trim();
+  const forfait = document.getElementById('f-forfait').value;
+  const tel = document.getElementById('f-tel').value.trim();
+  const proof = document.getElementById('f-proof').files[0];
+
+  if (!nom || !forfait) { showToast('⚠️ Nom et forfait sont obligatoires.'); return; }
+  if (!proof) { showToast('⚠️ Veuillez ajouter une preuve de paiement.'); return; }
+
+  // Save to orders
+  const order = { id: Date.now(), nom: nom+(prenom?' '+prenom:''), forfait, tel, date: new Date().toLocaleDateString('fr-FR'), status:'pending', proof:'[image locale]' };
+  ORDERS.push(order);
+  localStorage.setItem('ilmo_orders', JSON.stringify(ORDERS));
+
+  // Build WhatsApp message
+  const msg = `🎬 *Nouvelle Commande FARA Studio*\n\n👤 Nom : ${nom}${prenom ? ' '+prenom : ''}\n📦 Forfait : ${forfait}${tel ? '\n📞 Tel : '+tel : ''}\n📅 Date : ${order.date}\n\n_Preuve de paiement envoyée en image_`;
+  const waUrl = `https://wa.me/33652468922?text=${encodeURIComponent(msg)}`;
+  window.open(waUrl, '_blank');
+  showToast('✅ Commande envoyée ! WhatsApp ouvert.');
+  document.getElementById('f-nom').value=''; document.getElementById('f-prenom').value='';
+  document.getElementById('f-forfait').value=''; document.getElementById('f-tel').value='';
+  document.getElementById('preview-img').style.display='none';
+}
+
+// ── AUTH ──
+function openModal() { document.getElementById('loginModal').classList.add('open'); }
+function closeModal() { document.getElementById('loginModal').classList.remove('open'); }
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+}
+function login() {
+  const email = document.getElementById('l-email').value;
+  const pass = document.getElementById('l-pass').value;
+  const user = USERS.find(u => u.email===email && u.pass===pass);
+  if (!user) { showToast('❌ Identifiants incorrects.'); return; }
+  currentUser = user;
+  closeModal();
+  showSection(user.role==='admin'?'admin':'client');
+  showToast('👋 Bienvenue ' + user.name + ' !');
+}
+function register() {
+  const name = document.getElementById('r-name').value.trim();
+  const email = document.getElementById('r-email').value.trim();
+  const pass = document.getElementById('r-pass').value;
+  if (!name||!email||!pass) { showToast('⚠️ Remplissez tous les champs.'); return; }
+  if (USERS.find(u=>u.email===email)) { showToast('❌ Email déjà utilisé.'); return; }
+  const user = { email, pass, role:'user', name, days:0, plan:'Aucun forfait', stars:0 };
+  USERS.push(user);
+  localStorage.setItem('ilmo_users', JSON.stringify(USERS));
+  currentUser = user;
+  closeModal();
+  showSection('client');
+  showToast('🎉 Compte créé ! Bienvenue ' + name);
+}
+function logout() { currentUser=null; showSection('home'); showToast('À bientôt !'); }
+
+// ── SHOW SECTIONS ──
+function showSection(s) {
+  document.getElementById('espace-client').style.display='none';
+  document.getElementById('espace-admin').style.display='none';
+  if (s==='client') {
+    document.getElementById('espace-client').style.display='block';
+    renderClient();
+    document.getElementById('espace-client').scrollIntoView({behavior:'smooth'});
+  } else if (s==='admin') {
+    document.getElementById('espace-admin').style.display='block';
+    renderAdmin();
+    document.getElementById('espace-admin').scrollIntoView({behavior:'smooth'});
+  }
+}
+
+// ── RENDER CLIENT ──
+function renderClient() {
+  if (!currentUser) return;
+  document.getElementById('clientName').textContent = currentUser.name;
+  document.getElementById('daysLeft').textContent = currentUser.days ?? '—';
+  document.getElementById('activePlan').textContent = currentUser.plan ?? '—';
+  const stars = currentUser.stars ?? 0;
+  document.getElementById('starsCount').textContent = stars;
+  const starsEl = document.getElementById('starsDisplay');
+  starsEl.innerHTML = '';
+  for (let i=0; i<5; i++) {
+    const s = document.createElement('span');
+    s.className='star'+(i<Math.floor(stars/20)?' lit':'');
+    s.textContent='★';
+    starsEl.appendChild(s);
+  }
+  const hist = ORDERS.filter(o=>o.nom.includes(currentUser.name.split(' ')[0]));
+  const tbody = document.getElementById('clientHistory');
+  tbody.innerHTML = hist.length ? hist.map(o=>`<tr><td>${o.date}</td><td>${o.forfait}</td><td><span class="badge ${o.status==='active'?'active':'pending'}">${o.status==='active'?'Actif':'En attente'}</span></td><td>+${o.forfait.includes('6 Mois')?300:o.forfait.includes('1 Mois')?50:10} ★</td></tr>`).join('') : '<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:24px;">Aucune commande.</td></tr>';
+}
+
+// ── RENDER ADMIN ──
+function renderAdmin() {
+  // Pending orders
+  const pending = ORDERS.filter(o=>o.status==='pending');
+  document.getElementById('pendingOrders').innerHTML = pending.length
+    ? pending.map(o=>`<tr><td><strong>${o.nom}</strong></td><td>${o.forfait}</td><td>${o.date}</td><td><span class="badge pending">En attente</span></td><td><button class="btn-validate" onclick="validateOrder(${o.id})">✓ Valider</button><button class="btn-reject" onclick="rejectOrder(${o.id})">✗ Refuser</button></td></tr>`).join('')
+    : '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:24px;">Aucune demande en attente. 🎉</td></tr>';
+
+  // Access table
+  const active = ORDERS.filter(o=>['active','warning','danger'].includes(o.status));
+  document.getElementById('accessTable').innerHTML = active.length
+    ? active.map(o=>`<tr><td><strong>${o.nom}</strong></td><td>${o.forfait}</td><td>${o.date}</td><td>${o.daysLeft}j</td><td><span class="badge ${o.status==='active'?'active':o.status==='warning'?'warning':'danger'}">${o.status==='active'?'Actif':o.status==='warning'?'Bientôt expiré':'À couper'}</span></td></tr>`).join('')
+    : '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:24px;">Aucun accès actif.</td></tr>';
+
+  // Loyalty
+  const loyal = USERS.filter(u=>u.role==='user');
+  document.getElementById('loyaltyTable').innerHTML = loyal.map(u=>`<tr><td><strong>${u.name}</strong></td><td>⭐ ${u.stars??0}</td><td>${(u.stars??0)>=200?'Or':( u.stars??0)>=50?'Argent':'Bronze'}</td><td>${ORDERS.filter(o=>o.nom.includes(u.name.split(' ')[0])).length}</td></tr>`).join('') || '<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:24px;">Aucun client.</td></tr>';
+
+  setProfitView('jour', document.querySelector('.profit-tab.active'));
+}
+
+function validateOrder(id) {
+  const o = ORDERS.find(o=>o.id===id);
+  if (!o) return;
+  o.status='active';
+  o.daysLeft = o.forfait.includes('6 Mois')?180:o.forfait.includes('1 Mois')?30:7;
+  localStorage.setItem('ilmo_orders', JSON.stringify(ORDERS));
+  showToast('✅ Commande validée !');
+  renderAdmin();
+}
+function rejectOrder(id) {
+  ORDERS = ORDERS.filter(o=>o.id!==id);
+  localStorage.setItem('ilmo_orders', JSON.stringify(ORDERS));
+  showToast('❌ Commande refusée.');
+  renderAdmin();
+}
+
+// ── PROFIT CHART ──
+const profitData = {
+  jour: { labels:['Lu','Ma','Me','Je','Ve','Sa','Di'], vals:[600,1000,0,600,1000,5000,600], total:'8 800 FDJ' },
+  semaine: { labels:['S1','S2','S3','S4'], vals:[3200,5600,2100,7800], total:'18 700 FDJ' },
+  mois: { labels:['Jan','Fév','Mar','Avr','Mai','Jun','Jul'], vals:[12000,8500,15000,11200,18000,9700,14600], total:'89 000 FDJ' },
+  an: { labels:['2022','2023','2024','2025'], vals:[45000,78000,110000,89000], total:'322 000 FDJ' }
+};
+function setProfitView(key, btn) {
+  document.querySelectorAll('.profit-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const d = profitData[key];
+  document.getElementById('totalProfit').textContent = d.total;
+  const chart = document.getElementById('profitChart');
+  const labels = document.getElementById('profitLabels');
+  const max = Math.max(...d.vals);
+  chart.innerHTML = d.vals.map((v,i)=>`<div style="flex:1;height:${Math.max(6,(v/max)*90)}px;border-radius:4px 4px 0 0;background:linear-gradient(to top,var(--accent),rgba(232,184,75,0.3));"></div>`).join('');
+  labels.innerHTML = d.labels.map(l=>`<div style="flex:1;font-size:0.6rem;color:var(--muted);text-align:center;margin-top:6px;">${l}</div>`).join('');
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
